@@ -1,0 +1,468 @@
+#:kivy 2.2.1
+#:import join os.path.join
+#:import expanduser os.path.expanduser
+#:import webbrowser webbrowser
+
+
+# <<< CUSTOMIZED WIDGETS >>>
+
+<IconButton>:
+    size_hint: None, None
+    size: dp(32), dp(32)
+    background_color: 0, 0, 0, 0
+    opacity: 0.5 if self.disabled else 1
+    on_press: self.opacity = 0.8
+    on_touch_up: if not self.disabled: self.opacity = 1
+    source: root.img_src
+
+<InfoLabel@Label>:
+    size_hint: None, None
+    font_size: sp(15)
+    color: 146/255, 174/255, 164/255
+
+<EventCard>:
+    size_hint: None, None
+
+    canvas.before:
+        Color:
+            rgb: 2/255, 46/255, 43/255
+        RoundedRectangle:
+            size: self.size
+            radius: [15,]
+
+    Image:
+        source: root.img_src
+        size_hint: None, None
+        height: self.parent.height * 0.6
+        pos_hint: {"center_x": 0.5, "top": 1}
+
+    Label:
+        text: root.event_title
+        size_hint: None, None
+        size: self.texture_size
+        pos_hint: {"center_x": 0.5, "top": 0.4}
+        font_size: sp(20)
+
+    Label:
+        text: root.event_count
+        size_hint: None, None
+        size: self.texture_size
+        pos_hint: {"center_x": 0.5, "top": 0.3}
+        font_size: sp(22)
+        color: 57/255, 255/255, 20/255
+
+    InfoLabel:
+        text: root.event_timing
+        size: self.texture_size
+        pos_hint: {"center_x": 0.5, "top": 0.15}
+
+<HighlightedLabel@Label>:
+    size_hint: None, None
+    size: self.texture_size
+    color: "black"
+    font_size: sp(20)
+
+    canvas.before:
+        Color:
+            rgba: 139/255, 188/255, 217/255, 1
+
+        RoundedRectangle:
+            pos: self.pos[0] - 10, self.pos[1] - 5
+            size: self.size[0] + 20, self.size[1] + 10
+            radius: [15,]
+
+<CustomToggleButton>:
+    background_color: 0, 0, 0, 0
+    color: "black" if self.state == "down" else "gray"
+    size_hint: None, None
+    height: dp(35)
+
+    canvas.before:
+        Color:
+            rgba: (139/255, 188/255, 217/255, 1) if self.state == "down" else (85/255, 100/255, 100/255, 0.3)
+        RoundedRectangle:
+            size: self.size
+            pos: self.pos
+            radius: 10,
+
+<ToggleButtonContainer>:
+    size_hint: None, None
+    size: self.minimum_size
+    spacing: dp(5)
+    on_max_width: root.add_toggle_buttons()
+    on_toggle_options: root.add_toggle_buttons()
+
+<SettingTextInput@TextInput>:
+    background_color: 0, 0, 0, 0
+    foreground_color: "white"
+    cursor_color: "white"
+    size_hint: None, None
+    padding: dp(15), dp(6), dp(6), dp(6)  # 6 is default, setting padding left to 15
+    font_size: sp(15)
+    multiline: False
+    write_tab: False
+
+    canvas.after:
+        Color:
+            rgba: 85/255, 100/255, 100/255, 0.3
+        RoundedRectangle:
+            size: self.size
+            pos: self.pos
+            radius: 10,
+
+<SettingButton@Button>:
+    background_color: 0, 0, 0, 0
+    foreground_color: "white"
+    color: "white"
+    size_hint: None, None
+    font_size: sp(15)
+
+    canvas.after:
+        Color:
+            rgba: 85/255, 100/255, 100/255, 0.3
+        RoundedRectangle:
+            size: self.size
+            pos: self.pos
+            radius: 10,
+
+<SettingBox>:
+    orientation: "vertical"
+    spacing: dp(5)
+    size_hint: None, None
+    size: self.minimum_size
+
+    Label:
+        size_hint: None, None
+        text: root.heading
+        size: self.texture_size
+        color: 0.8, 0.8, 0.8
+        font_size: sp(22)
+        font_name: "assets/fonts/cabin.ttf"
+
+
+# <<< SCREENS >>>
+
+<HomeScreen>:
+    quote: quote
+    screen_time: screen_time
+    welcome_text: welcome_text
+    eyes_event_card: eyes_event_card
+    water_event_card: water_event_card
+    exercise_event_card: exercise_event_card
+
+    FloatLayout:
+        Image:
+            id: logo
+            source: "assets/images/heart.png"
+            size_hint: None, None
+            size: dp(75), dp(75)
+            pos_hint: {"center_x": .07, "center_y": .92}
+
+        Label:
+            id: app_name
+            text: "Wellbeing"
+            size_hint: None, None
+            size: self.texture_size
+            center: logo.center_x + (self.width * 0.9), logo.center_y + dp(10)
+            color: 1, 1, 1
+            font_name: "assets/fonts/courgette.ttf"
+            font_size: sp(30)
+
+        Label:
+            id: tagline
+            text: "We'll be interrupting for your good"
+            size_hint: None, None
+            size: self.texture_size
+            center: app_name.x + (self.width / 2), app_name.y - dp(12)
+            color: 180/255, 180/255, 180/255
+            font_name: "assets/fonts/sofia-sans.ttf"
+            font_size: sp(18)
+
+        BoxLayout:
+            spacing: dp(10)
+            center: root.right - (self.width / 2) - dp(15), root.top - self.height
+            size_hint: None, None
+            size: self.minimum_size
+
+            IconButton:
+                img_src: "assets/images/settings.png"
+                on_release: app.screen_manager.current = "Settings Screen"
+
+            IconButton:
+                img_src: "assets/images/pause.png" if app.running else "assets/images/start.png"
+                on_release: root.toggle_app_status()
+
+            IconButton:
+                id: quit_btn
+                img_src: "assets/images/quit.png"
+                on_release: app.close_app()
+                on_touch_up: self.opacity = 1
+
+        Label:
+            id: dashboard_text
+            text: "Dashboard"
+            size_hint: None, None
+            size: self.texture_size
+            center: (self.width / 2) + dp(20), logo.center_y - self.height - dp(40)
+            color: 1/255, 217/255, 255/255
+            font_name: "assets/fonts/kenia.ttf"
+            font_size: sp(35)
+
+        Label:
+            id: welcome_text
+            text: root.get_greeting(app.settings_store["user_name"]["value"])
+            size_hint: None, None
+            size: self.texture_size
+            center: (self.width / 2) + dp(20), dashboard_text.center_y - self.height - dp(10)
+            color: "white"
+            font_size: sp(20)
+
+        ScrollView:
+            size_hint: None, None
+            size: root.width * 0.9, welcome_text.y - screen_time.top - dp(20)
+            center: root.center_x, (screen_time.top / 2) + (welcome_text.y / 2) + dp(5)
+            scroll_type: ["bars", "content"]
+            do_scroll_x: False
+
+            Label:
+                id: quote
+                text: ""
+                size_hint: None, None
+                size: self.parent.width - dp(10), max(self.texture_size[1], self.parent.height)
+                text_size: self.width, None
+
+                # EQUATION FOR center_y
+                # available_space = self.welcome_text.y - self.screen_time.top
+                # center_y = self.screen_time.top + (available_space / 2)
+                color: 155/255, 243/255, 148/255
+                halign: "center"
+                font_size: sp(18)
+                on_texture: self.parent.center = root.center_x, (screen_time.top / 2) + (welcome_text.y / 2) + dp(5)
+
+        HighlightedLabel:
+            id: screen_time
+            font_name: "assets/fonts/cabin.ttf"
+            center: root.center
+            on_texture: self.center = root.center
+
+        BoxLayout:
+            spacing: dp(20)
+            pos_hint: {"center_x": 0.5, "center_y": 0.25}
+            size_hint: None, None
+            size: self.minimum_size
+
+            EventCard:
+                id: eyes_event_card
+                size: root.width / 3.5, root.width / 3.5
+                img_src: "assets/images/eyes.png"
+                event_title: "Relaxed eyes"
+                event_timing: "Setting reminder..." if app.running else "Paused"
+
+            EventCard:
+                id: water_event_card
+                size: root.width / 3.5, root.width / 3.5
+                img_src: "assets/images/water.png"
+                event_title: "Drank water"
+                event_timing: "Setting reminder..." if app.running else "Paused"
+
+            EventCard:
+                id: exercise_event_card
+                size: root.width / 3.5, root.width / 3.5
+                img_src: "assets/images/exercise.png"
+                event_title: "Exercised"
+                event_timing: "Setting reminder..." if app.running else "Paused"
+
+<ReminderScreen>:
+    reminder_text: reminder_text
+
+    Label:
+        id: reminder_text
+        text: "Reminder"
+        size_hint: None, None
+        size: self.texture_size
+        center: (self.width / 2) + dp(20), root.top - self.height - dp(10)
+        color: 1/255, 217/255, 255/255
+        font_name: "assets/fonts/kenia.ttf"
+        font_size: sp(35)
+
+    Image:
+        id: reminder_img
+        source: root.img_src
+        size_hint: None, None
+        size: root.width * 0.3, root.height * 0.3
+        fit_mode: "contain"
+        center: root.center_x, root.center_y + (self.height / 2)
+
+    Label:
+        id: reminder_text
+        size_hint: None, None
+        size: root.width * 0.9, self.texture_size[1]
+        text_size: self.width, None
+        halign: "center"
+        pos: root.center_x - (self.width / 2), reminder_img.y - self.height - dp(20)
+        text: "Time to move! Incorporate some physical activity into your routine for a healthy break."
+        font_size: sp(20)
+
+    BoxLayout:
+        spacing: dp(150)
+        center: root.center_x, self.height * 1.5
+        size_hint: None, None
+        size: self.minimum_size
+
+        IconButton:
+            size: dp(64), dp(64)
+            img_src: "assets/images/close.png"
+            disabled: True if root.skip_count == 0 else False
+            on_release: root.handle_reminder_btn_click("skip")
+
+        IconButton:
+            size: dp(64), dp(64)
+            img_src: "assets/images/check.png"
+            on_release: root.handle_reminder_btn_click("done")
+
+    InfoLabel:
+        id: skips
+        size: self.texture_size
+        center: root.center_x, self.height
+        text: f"{root.skip_count}/3 skips left for today"
+
+<SettingsScreen>:
+    name_text_input: name_text_input
+    water_intake: water_intake
+    hotkey: hotkey
+    log_save_location: log_save_location
+    log_save_btn: log_save_btn
+
+    BoxLayout:
+        spacing: dp(10)
+        center: root.right - (self.width / 2) - dp(15), root.top - self.height
+        size_hint: None, None
+        size: self.minimum_size
+
+        IconButton:
+            img_src: "assets/images/close.png"
+            on_release: app.screen_manager.current = "Home Screen"
+
+    Label:
+        id: settings_text
+        text: "Settings"
+        size_hint: None, None
+        size: self.texture_size
+        center: (self.width / 2) + dp(20), root.top - self.height - dp(10)
+        color: 1/255, 217/255, 255/255
+        font_name: "assets/fonts/kenia.ttf"
+        font_size: sp(35)
+
+    ScrollView:
+        size_hint: None, None
+        size: root.width * 0.9, settings_text.y
+        center: root.center_x, settings_text.center_y - (self.height / 2) - dp(30)
+        scroll_type: ["bars", "content"]
+
+        BoxLayout:
+            spacing: dp(15)
+            orientation: "vertical"
+            size_hint_y: None
+            height: self.minimum_height
+            padding: 0, 0, 0, dp(30)
+
+            SettingBox:
+                heading: "Name"
+
+                SettingTextInput:
+                    id: name_text_input
+                    size: root.width * 0.6, dp(35)
+                    text: app.settings_store["user_name"]["value"]
+                    hint_text: "Enter your name"
+                    on_text: root.update_user_name()
+
+            SettingBox:
+                heading: "Time Format"
+
+                ToggleButtonContainer:
+                    id: time_format
+                    max_width: root.width * 0.6
+                    group: "time_format"
+                    toggle_options: "AM/PM", "24-hours"
+                    action: app.screen_manager.get_screen("Home Screen").set_reminders_text
+
+            SettingBox:
+                heading: "Eye Care Interval"
+
+                ToggleButtonContainer:
+                    id: eyes_freq
+                    max_width: root.width * 0.6
+                    group: "eyes_freq"
+                    toggle_options: "20 min", "30 min", "45 min", "1 hr"
+                    action: app.screen_manager.get_screen("Reminder Screen").set_frequencies
+
+            SettingBox:
+                heading: "Hydration Interval"
+
+                ToggleButtonContainer:
+                    id: water_freq
+                    max_width: root.width * 0.6
+                    group: "water_freq"
+                    toggle_options: "30 min", "45 min", "1 hr", "2 hr"
+                    action: app.screen_manager.get_screen("Reminder Screen").set_frequencies
+
+            SettingBox:
+                heading: "Exercise Interval"
+
+                ToggleButtonContainer:
+                    id: exercise_freq
+                    max_width: root.width * 0.6
+                    group: "exercise_freq"
+                    toggle_options: "1 hr", "1.5 hr", "2 hr"
+                    action: app.screen_manager.get_screen("Reminder Screen").set_frequencies
+
+            SettingBox:
+                heading: "Water Intake Per Reminder (in mL)"
+
+                SettingTextInput:
+                    id: water_intake
+                    size: root.width * 0.6, dp(35)
+                    text: app.settings_store["water_intake"]["value"]
+                    hint_text: "Leave blank to disable water intake tracker"
+                    on_text: root.update_water_intake()
+                    input_filter: "int"
+
+            SettingBox:
+                heading: "Show/Hide Window Shortcut"
+
+                SettingTextInput:
+                    id: hotkey
+                    size: root.width * 0.6, dp(35)
+                    hint_text: "Enter an alphabet to change the shortcut" if self.focus else app.settings_store["visibility_hotkey"]["value"]
+                    hint_text_color: (0.5, 0.5, 0.5, 1) if "shortcut" in self.hint_text else "white"
+                    on_text: if len(self.text): root.update_hotkey()
+
+            SettingBox:
+                heading: "Save Reminder Logs"
+
+                InfoLabel:
+                    id: log_save_location
+                    size: root.width * 0.6, self.texture_size[1]
+                    text_size: root.width * 0.6, None
+                    text: f"{join(expanduser('~'), 'Documents', 'Wellbeing')}"
+
+                SettingButton:
+                    id: log_save_btn
+                    text: "Save"
+                    size: root.width * 0.6, dp(35)
+                    on_release: if self.text == "Save": root.save_reminder_logs()
+
+            InfoLabel:
+                size: root.width * 0.6, self.texture_size[1]
+                text_size: root.width * 0.6, None
+                halign: "center"
+                text: "Icons made by Freepik from www.flaticon.com\nDeveloped by Divyanshu Tiwari (@iamdevdiv)"
+
+            InfoLabel:
+                size: root.width * 0.6, self.texture_size[1]
+                text_size: root.width * 0.6, None
+                halign: "center"
+                markup: True
+                text: "[ref=https://github.com/iamdevdiv/Wellbeing]View Source Code[/ref]"
+                color: 0, 112/255, 224/255
+                on_ref_press: webbrowser.open(args[1])
