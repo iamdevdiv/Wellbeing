@@ -10,12 +10,13 @@ Config.set("input", "mouse", "mouse, disable_multitouch")  # disable multitouch 
 from sys import exit
 from tendo import singleton
 from kivy.storage.dictstore import DictStore
-from keyboard import add_hotkey, remove_hotkey, press_and_release
+from keyboard import add_hotkey, remove_hotkey
 
 try:
+    DictStore("data/instance.dat")["instance"] = {"show": False}
     me = singleton.SingleInstance()
 except singleton.SingleInstanceException:
-    press_and_release(DictStore("data/settings.dat")["visibility_hotkey"]["value"])
+    DictStore("data/instance.dat")["instance"] = {"show": True}
     exit(-1)
 
 # Set default window color and hide it
@@ -93,7 +94,7 @@ class HomeScreen(Screen):
 
         # Store last hour in which user was greeted and try to update greeting every second
         self.greet_hour = datetime.now().hour
-        Clock.schedule_interval(lambda dt: self.update_welcome_text(), 1)
+        Clock.schedule_interval(lambda dt: self.update_welcome_text(), 1/60)
 
         # Set initial screen time fetched from database without incrementing the value and
         # schedule increment every minute
@@ -403,7 +404,7 @@ class ReminderScreen(Screen):
         Schedule to run `remind` method every second.
         """
 
-        self.remind_event = Clock.schedule_interval(lambda dt: self.remind(), 1)
+        self.remind_event = Clock.schedule_interval(lambda dt: self.remind(), 1/60)
 
     def set_reminders(self) -> None:
         """
@@ -479,7 +480,6 @@ class ReminderScreen(Screen):
                 self.app.show_app()
 
                 notify(self.notification_titles[event_type], self.reminder_text.text, event_type)
-                # self.app.tray_icon.notify(self.reminder_text.text, self.notification_titles[event_type])
 
     def update_reminders(self) -> None:
         """
@@ -681,7 +681,6 @@ class WellbeingApp(App):
         Window.bind(on_request_close=self.hide_app)  # hide app when closed with "X" button
         self.icon = "assets/images/heart.png"
 
-        self.tray_icon = None
         self.visible = False
         self.hotkey_return_value = None
 
@@ -695,6 +694,8 @@ class WellbeingApp(App):
         self.event_count_history = DictStore("data/event_count_history.dat")
 
         self.screen_manager = CustomScreenManager(transition=NoTransition())
+
+        Clock.schedule_interval(lambda dt: self.handle_second_instance(), 1/60)
 
     def hide_app(self, *args) -> bool:  # NOQA
         """
@@ -739,6 +740,19 @@ class WellbeingApp(App):
         if self.visible:
             self.hide_app()
         else:
+            self.show_app()
+
+    def handle_second_instance(self):
+        """
+        This method checks if the app should be shown when a second instance is launched.
+        It reads the value of the 'show' key from the DictStore file 'data/instance.dat'.
+        If the value is True, it sets it to False and calls the show_app() method.
+        Otherwise, it does nothing.
+        """
+
+        to_show = DictStore("data/instance.dat")["instance"]["show"]
+        if to_show:
+            DictStore("data/instance.dat")["instance"] = {"show": False}
             self.show_app()
 
     def create_hotkey(self) -> None:
